@@ -50,9 +50,8 @@ const { app, addEntrypoint } = createAgentApp(
 // Add the wallet P&L calculation entrypoint (protected by X402 payment)
 addEntrypoint({
   key: "calculate_pnl",
-  name: "calculate_pnl",
   description: "Calculate profit/loss for a cryptocurrency wallet. Requires payment of 2 cents in USDC on Base network.",
-  inputSchema: WalletPnLInput,
+  input: WalletPnLInput,
   handler: async ({ input }) => {
     console.log("\n" + "=".repeat(60));
     console.log("🔐 Payment verified! Calculating P&L...");
@@ -81,20 +80,19 @@ addEntrypoint({
       console.log(`   Initial Investment: $${result.summary.initial_investment_usd.toFixed(2)}`);
       console.log(`   Current Value: $${result.summary.current_value_usd.toFixed(2)}\n`);
 
-      // Return the P&L result
+      // Return the P&L result (agent-kit expects 'output' property)
       return {
-        success: true,
-        data: result,
-        message: "P&L calculated successfully"
+        output: result
       };
 
     } catch (error) {
       console.error("❌ Error calculating P&L:", error);
 
       return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-        message: "Failed to calculate P&L"
+        output: {
+          error: error instanceof Error ? error.message : "Unknown error occurred",
+          success: false
+        }
       };
     }
   }
