@@ -3,6 +3,7 @@ import { createAgentApp } from "@lucid-dreams/agent-kit";
 import { WalletService } from "./services/walletService.js";
 import { cacheService } from "./services/cacheService.js";
 import { SUPPORTED_CHAINS } from "./config/index.js";
+import { serve } from "@hono/node-server";
 
 /**
  * Wallet P&L Tracker Agent
@@ -220,3 +221,25 @@ addEntrypoint({
 
 // Export the app
 export default app;
+
+// Start the server
+const PORT = parseInt(process.env.PORT || "3001");
+
+serve(
+  {
+    fetch: app.fetch,
+    port: PORT,
+    hostname: "0.0.0.0",  // Required for Railway
+  },
+  (info) => {
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`💰 Wallet P&L Tracker Agent`);
+    console.log(`${"=".repeat(60)}`);
+    console.log(`✅ Server is running on http://0.0.0.0:${info.port}`);
+    console.log(`📍 Main entrypoint: POST http://0.0.0.0:${info.port}/entrypoints/calculate_pnl/invoke`);
+    console.log(`📍 Test entrypoint: POST http://0.0.0.0:${info.port}/entrypoints/test/invoke`);
+    console.log(`📍 Cache stats: POST http://0.0.0.0:${info.port}/entrypoints/cache_stats/invoke`);
+    console.log(`📖 API Docs: http://0.0.0.0:${info.port}/`);
+    console.log(`${"=".repeat(60)}\n`);
+  }
+);
