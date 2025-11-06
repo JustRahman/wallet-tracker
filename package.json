@@ -1,0 +1,39 @@
+{
+  "name": "wallet-pnl-tracker",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "agent": "tsx src/agent.ts",
+    "agent:dev": "tsx watch src/agent.ts",
+    "test:mock": "tsx test.ts",
+    "test:real": "tsx test-real-wallet.ts"
+  },
+  "keywords": [
+    "wallet",
+    "pnl",
+    "tracker",
+    "blockchain",
+    "agent"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Track realized and unrealized P&L across multiple blockchain networks",
+  "dependencies": {
+    "@hono/node-server": "^1.19.6",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "@types/node": "^24.10.0",
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0",
+    "node-cache": "^5.1.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "x402": "^0.7.1",
+    "x402-hono": "^0.7.1",
+    "zod": "^4.1.12"
+  }
+}
