@@ -48,9 +48,6 @@ const InputSchema = z.object({
   cost_basis_method: z.enum(["fifo", "lifo", "avg"]).optional().default("fifo"),
 });
 
-// Pricing: 0.01 USDC when payments enabled, free otherwise
-const pnlPrice = config.enablePayments ? config.paymentAmount : "0";
-
 /**
  * Main entrypoint for P&L calculation
  */
@@ -58,7 +55,8 @@ addEntrypoint({
   key: "calculate_pnl",
   description: "Calculate P&L for a wallet across multiple chains",
   input: InputSchema,
-  price: pnlPrice,
+  // Set price only when payments are enabled; omit when disabled for free access
+  ...(config.enablePayments ? { price: config.paymentAmount } : {}),
   async handler({ input }) {
     const {
       wallet_address,
@@ -129,7 +127,7 @@ addEntrypoint({
     amount_usd: z.number().positive(),
     payment_method: z.enum(["lightning", "base", "ethereum"]).optional().default("lightning"),
   }),
-  price: "0", // Always free
+  // No price property = free endpoint
   async handler({ input }) {
     const { amount_usd, payment_method } = input;
 
@@ -168,7 +166,7 @@ addEntrypoint({
   input: z.object({
     message: z.string().optional().default("Hello"),
   }),
-  price: "0", // Always free
+  // No price property = free endpoint
   async handler({ input }) {
     const { message } = input;
 
@@ -194,7 +192,7 @@ addEntrypoint({
   input: z.object({
     cache_type: z.enum(["all", "transactions", "prices"]).optional().default("all"),
   }),
-  price: "0", // Always free
+  // No price property = free endpoint
   async handler({ input }) {
     const { cache_type } = input;
 
@@ -227,7 +225,7 @@ addEntrypoint({
   key: "cache_stats",
   description: "Get cache statistics",
   input: z.object({}),
-  price: "0", // Always free
+  // No price property = free endpoint
   async handler() {
     const stats = cacheService.getStats();
 
