@@ -10,26 +10,25 @@ import { serve } from "@hono/node-server";
  * Tracks realized and unrealized profit & loss across multiple blockchain networks
  */
 
-const { app, addEntrypoint } = createAgentApp(
-  {
-    name: "wallet-pnl-tracker",
-    version: "0.2.0",
-    description: "Track realized and unrealized P&L across multiple chains",
-  },
-  config.enablePayments
-    ? {
-        config: {
-          payments: {
-            facilitatorUrl: config.facilitatorUrl,
-            payTo: config.payToWallet,
-            network: config.paymentNetwork,
-            defaultPrice: config.paymentAmount,
-          },
-        },
-        useConfigPayments: true, // Enables X402 payment middleware
-      }
-    : undefined
-);
+// Build agent configuration
+const agentMeta = {
+  name: "wallet-pnl-tracker",
+  version: "0.2.0",
+  description: "Track realized and unrealized P&L across multiple chains",
+};
+
+// Build options with payment configuration when enabled
+const agentOptions = config.enablePayments
+  ? {
+      payments: {
+        facilitatorUrl: config.facilitatorUrl,
+        payTo: config.payToWallet as `0x${string}`,
+        network: config.paymentNetwork as any,
+      },
+    }
+  : undefined;
+
+const { app, addEntrypoint } = createAgentApp(agentMeta, agentOptions);
 
 // Initialize wallet service
 const walletService = new WalletService();
@@ -49,6 +48,9 @@ const InputSchema = z.object({
   cost_basis_method: z.enum(["fifo", "lifo", "avg"]).optional().default("fifo"),
 });
 
+// Pricing: 0.01 USDC when payments enabled, free otherwise
+const pnlPrice = config.enablePayments ? config.paymentAmount : "0";
+
 /**
  * Main entrypoint for P&L calculation
  */
@@ -56,6 +58,7 @@ addEntrypoint({
   key: "calculate_pnl",
   description: "Calculate P&L for a wallet across multiple chains",
   input: InputSchema,
+  price: pnlPrice,
   async handler({ input }) {
     const {
       wallet_address,
@@ -126,6 +129,7 @@ addEntrypoint({
     amount_usd: z.number().positive(),
     payment_method: z.enum(["lightning", "base", "ethereum"]).optional().default("lightning"),
   }),
+  price: "0", // Always free
   async handler({ input }) {
     const { amount_usd, payment_method } = input;
 
@@ -164,6 +168,7 @@ addEntrypoint({
   input: z.object({
     message: z.string().optional().default("Hello"),
   }),
+  price: "0", // Always free
   async handler({ input }) {
     const { message } = input;
 
@@ -189,6 +194,7 @@ addEntrypoint({
   input: z.object({
     cache_type: z.enum(["all", "transactions", "prices"]).optional().default("all"),
   }),
+  price: "0", // Always free
   async handler({ input }) {
     const { cache_type } = input;
 
@@ -221,6 +227,7 @@ addEntrypoint({
   key: "cache_stats",
   description: "Get cache statistics",
   input: z.object({}),
+  price: "0", // Always free
   async handler() {
     const stats = cacheService.getStats();
 
@@ -251,21 +258,30 @@ serve(
     console.log(`💰 Wallet P&L Tracker Agent`);
     console.log(`${"=".repeat(60)}`);
     console.log(`✅ Server is running on http://0.0.0.0:${info.port}`);
-    console.log(`📍 Main entrypoint: POST http://0.0.0.0:${info.port}/entrypoints/calculate_pnl/invoke`);
-    console.log(`📍 Test entrypoint: POST http://0.0.0.0:${info.port}/entrypoints/test/invoke`);
-    console.log(`📍 Cache stats: POST http://0.0.0.0:${info.port}/entrypoints/cache_stats/invoke`);
     console.log(`📖 API Docs: http://0.0.0.0:${info.port}/`);
+    console.log(`${"=".repeat(60)}`);
 
     if (config.enablePayments) {
-      console.log(`${"=".repeat(60)}`);
       console.log(`🔐 X402 Payments: ENABLED`);
-      console.log(`💳 Price: ${config.paymentAmount} USDC`);
-      console.log(`🌐 Network: ${config.paymentNetwork}`);
+      console.log(`💳 Price: ${config.paymentAmount} USDC on ${config.paymentNetwork}`);
       console.log(`💰 Pay to: ${config.payToWallet}`);
       console.log(`🔗 Facilitator: ${config.facilitatorUrl}`);
-    } else {
       console.log(`${"=".repeat(60)}`);
-      console.log(`🆓 X402 Payments: DISABLED (Free mode for testing)`);
+      console.log(`📍 Endpoints:`);
+      console.log(`   💳 calculate_pnl (${config.paymentAmount} USDC) - POST /entrypoints/calculate_pnl/invoke`);
+      console.log(`   🆓 test (FREE) - POST /entrypoints/test/invoke`);
+      console.log(`   🆓 cache_stats (FREE) - POST /entrypoints/cache_stats/invoke`);
+      console.log(`   🆓 clear_cache (FREE) - POST /entrypoints/clear_cache/invoke`);
+      console.log(`   🆓 mock_x402_payment (FREE) - POST /entrypoints/mock_x402_payment/invoke`);
+    } else {
+      console.log(`🆓 X402 Payments: DISABLED (All endpoints FREE for testing)`);
+      console.log(`${"=".repeat(60)}`);
+      console.log(`📍 Endpoints:`);
+      console.log(`   🆓 calculate_pnl - POST /entrypoints/calculate_pnl/invoke`);
+      console.log(`   🆓 test - POST /entrypoints/test/invoke`);
+      console.log(`   🆓 cache_stats - POST /entrypoints/cache_stats/invoke`);
+      console.log(`   🆓 clear_cache - POST /entrypoints/clear_cache/invoke`);
+      console.log(`   🆓 mock_x402_payment - POST /entrypoints/mock_x402_payment/invoke`);
     }
 
     console.log(`${"=".repeat(60)}\n`);
