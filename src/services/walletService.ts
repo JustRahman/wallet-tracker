@@ -307,7 +307,7 @@ export class WalletService {
       metadata: {
         last_updated: Date.now(),
         chains_queried: chains,
-        data_sources: ["etherscan", "coingecko"],
+        data_sources: ["etherscan", "defillama", "coingecko"],
       },
     };
   }

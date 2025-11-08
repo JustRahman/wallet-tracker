@@ -62,7 +62,7 @@ export class PnLCalculator {
       metadata: {
         last_updated: Date.now(),
         chains_queried: [...new Set(transactions.map((tx) => tx.chain))],
-        data_sources: ["mock"],
+        data_sources: ["etherscan", "defillama", "coingecko"],
       },
     };
   }
