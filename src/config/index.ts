@@ -25,6 +25,13 @@ export const config = {
   // Environment
   nodeEnv: process.env.NODE_ENV || "development",
   port: parseInt(process.env.PORT || "3000", 10),
+
+  // X402 Payment Configuration
+  enablePayments: process.env.ENABLE_PAYMENTS === "true",
+  paymentAmount: process.env.PAYMENT_AMOUNT || "0.01",
+  payToWallet: process.env.PAY_TO_WALLET || "0x992920386E3D950BC260f99C81FDA12419eD4594",
+  paymentNetwork: process.env.PAYMENT_NETWORK || "base",
+  facilitatorUrl: process.env.FACILITATOR_URL || "https://facilitator.daydreams.systems",
 };
 
 export const CHAIN_CONFIGS: Record<string, ChainConfig> = {

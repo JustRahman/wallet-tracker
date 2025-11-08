@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createAgentApp } from "@lucid-dreams/agent-kit";
 import { WalletService } from "./services/walletService.js";
 import { cacheService } from "./services/cacheService.js";
-import { SUPPORTED_CHAINS } from "./config/index.js";
+import { SUPPORTED_CHAINS, config } from "./config/index.js";
 import { serve } from "@hono/node-server";
 
 /**
@@ -10,11 +10,26 @@ import { serve } from "@hono/node-server";
  * Tracks realized and unrealized profit & loss across multiple blockchain networks
  */
 
-const { app, addEntrypoint } = createAgentApp({
-  name: "wallet-pnl-tracker",
-  version: "0.2.0",
-  description: "Track realized and unrealized P&L across multiple chains",
-});
+const { app, addEntrypoint } = createAgentApp(
+  {
+    name: "wallet-pnl-tracker",
+    version: "0.2.0",
+    description: "Track realized and unrealized P&L across multiple chains",
+  },
+  config.enablePayments
+    ? {
+        config: {
+          payments: {
+            facilitatorUrl: config.facilitatorUrl,
+            payTo: config.payToWallet,
+            network: config.paymentNetwork,
+            defaultPrice: config.paymentAmount,
+          },
+        },
+        useConfigPayments: true, // Enables X402 payment middleware
+      }
+    : undefined
+);
 
 // Initialize wallet service
 const walletService = new WalletService();
@@ -240,6 +255,19 @@ serve(
     console.log(`📍 Test entrypoint: POST http://0.0.0.0:${info.port}/entrypoints/test/invoke`);
     console.log(`📍 Cache stats: POST http://0.0.0.0:${info.port}/entrypoints/cache_stats/invoke`);
     console.log(`📖 API Docs: http://0.0.0.0:${info.port}/`);
+
+    if (config.enablePayments) {
+      console.log(`${"=".repeat(60)}`);
+      console.log(`🔐 X402 Payments: ENABLED`);
+      console.log(`💳 Price: ${config.paymentAmount} USDC`);
+      console.log(`🌐 Network: ${config.paymentNetwork}`);
+      console.log(`💰 Pay to: ${config.payToWallet}`);
+      console.log(`🔗 Facilitator: ${config.facilitatorUrl}`);
+    } else {
+      console.log(`${"=".repeat(60)}`);
+      console.log(`🆓 X402 Payments: DISABLED (Free mode for testing)`);
+    }
+
     console.log(`${"=".repeat(60)}\n`);
   }
 );
